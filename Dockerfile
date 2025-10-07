@@ -1,3 +1,4 @@
+
 # Stage 1: Build the application
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
@@ -5,7 +6,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
 # Copy only the project file to optimize layer caching
-COPY ["FinanceApp/FinanceApp.csproj", "FinanceApp/"]
+COPY ["/FinanceApp.csproj", "FinanceApp/"]
 
 # Restore dependencies
 RUN dotnet restore "FinanceApp/FinanceApp.csproj"
@@ -19,13 +20,10 @@ WORKDIR /src/FinanceApp
 # Build the application
 RUN dotnet build "FinanceApp.csproj" -c Release -o /app/build
 
-# Stage 2: Publish the application
-FROM build AS publish
-
 # Publish the application for deployment
 RUN dotnet publish "FinanceApp.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-# Stage 3: Create final runtime image
+# Stage 2: Create final runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 
 # Create a non-root user for security
@@ -34,8 +32,8 @@ RUN useradd -m appuser
 # Set working directory
 WORKDIR /app
 
-# Copy published output from the publish stage
-COPY --from=publish /app/publish .
+# Copy published output from the build stage
+COPY --from=build /app/publish .
 
 # Change ownership of the app directory to the non-root user
 RUN chown -R appuser:appuser /app
@@ -47,4 +45,4 @@ USER appuser
 EXPOSE 5000
 
 # Run the application
-ENTRYPOINT ["dotnet", "FinanceApp.dll"]
+:
