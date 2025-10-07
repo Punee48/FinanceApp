@@ -1,0 +1,54 @@
+﻿@model IEnumerable<FinanceApp.Models.Expense>
+
+<h2>My Finance Expenses</h2>
+
+<div class="container">
+    <table class="table table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th>Description</th>
+                <th>Amount</th>
+                <th>Category</th>
+                <th>Date</th>
+            </tr>
+
+        </thead>
+        <tbody>
+            @foreach(var items in Model)
+            {
+                <tr>
+                    <td>@items.Description</td>
+                    <td>@items.Amount $</td>
+                    <td>@items.Category</td>
+                    <td>@items.Date.ToString("yyyy-MM-dd")</td>
+
+                </tr>
+            }
+
+        </tbody>
+    </table>
+</div>
+
+<h2>Expense Chart</h2>
+<div>
+    <canvas style="max-height: 450px; max-width:450px" id="myChart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  const ctx = document.getElementById('myChart');
+
+    fetch('/Expenses/GetChart').then(response => response.json()).then(data => {
+            new Chart(ctx, {
+                  type: 'pie',
+                  data: {
+                    labels: data.map(d => d.categoty),
+                    datasets: [{
+                          data: data.map(d => d.total),
+                    }]
+                  }
+             });
+
+    })
+</script>
