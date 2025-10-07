@@ -1,48 +1,36 @@
-
-# Stage 1: Build the application
+# Stage 1: Build and publish the app
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
-# Set working directory inside the container
 WORKDIR /src
 
-# Copy only the project file to optimize layer caching
+# Copy project file and restore dependencies
 COPY ["/FinanceApp.csproj", "FinanceApp/"]
-
-# Restore dependencies
 RUN dotnet restore "FinanceApp/FinanceApp.csproj"
 
 # Copy the rest of the source code
 COPY . .
 
-# Set working directory to the project folder
+# Publish the application (skip build step)
 WORKDIR /src/FinanceApp
-
-# Build the application
-RUN dotnet build "FinanceApp.csproj" -c Release -o /app/build
-
-# Publish the application for deployment
 RUN dotnet publish "FinanceApp.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # Stage 2: Create final runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 
-# Create a non-root user for security
+# Create a non-root user
 RUN useradd -m appuser
 
-# Set working directory
 WORKDIR /app
 
-# Copy published output from the build stage
+# Copy published output
 COPY --from=build /app/publish .
 
-# Change ownership of the app directory to the non-root user
+# Set permissions
 RUN chown -R appuser:appuser /app
-
-# Switch to the non-root user
 USER appuser
 
-# Expose the port your app will run on
+# Expose port
 EXPOSE 5000
 
-# Run the application
-:
+# Start the app
+ENTRYPOINT ["dotnet", "FinanceApp.dll"]
